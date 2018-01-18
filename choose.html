@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  </head>
+<div id="prompt1"className="prompt">
+prompt
+</div>
+<div class="options"></div>
+  <body>
+    <script>
+
+//Where they were last and what they chose
+//they go into a clearing and the options are "path" and "stay"
+//You receive "clearing" and "stay"
+//WHAT HAPPENS?
+
+// (arrayOfConditions, userChoice){ sequenceFlow, playerStateUpdates }
+//'clearing stay'
+
+
+  const situations = [
+    {location: "peepeedummy",
+    triggers: ["path"],
+    neighbors: ["poopoo", "popo"]
+  },
+    {
+      location: "clearing",
+      triggers: ["clearing"],
+      neighbors: ["clearing", "path"],
+      prompt: "You are in a clearing and you see a path...",
+      options: ["path", "stay"]
+    },
+    {
+      location: "path",
+      triggers: ["path"],
+      neighbors: ["clearing", "crossroad"],
+      prompt: "You are walking on the path...",
+      options: ["proceed", "return", "stay"]
+    },
+    {
+      location: "ridge",
+      triggers: ["proceed"],
+      neighbors: ["path"],
+      prompt: "You come to the steepest ridge",
+      options: ["return", "stay", "peek over"]
+    },
+    {
+      location: "overlook",
+      triggers: ["peek over"],
+      neighbors: ["ridge"],
+      prompt: "It's too dark to see",
+      options: ["return"]
+    }
+  ]
+
+//You are at a fork in the road
+  //function receives "left"
+
+
+  class Choose{
+        constructor(situations){
+          this.situations = situations
+          this.playerStateUpdates = []
+          this.playerState =
+          {
+            active: true,
+            location: "clearing",
+            options: ["path", "stay"]
+          }
+          this.options = document.querySelector(`.options`)
+          this.injectOptions()
+        }
+
+      createOptionElement(name){
+        const option = document.createElement("div")
+        option.setAttribute("data-name", name)
+        option.setAttribute("class", "option")
+        const text = document.createTextNode(name)
+        option.appendChild(text)
+        option.addEventListener('click', (e)=>{this.handleClick(e)})
+        return option
+      }
+
+      handleClick(e){
+        console.log("My data-name is: " + e.target.dataset.name)
+        console.log()
+        this.evaluateOption(e.target.dataset.name)
+      }
+
+      evaluateOption(optionString){
+        const player = this.playerState
+        //does it have a neighbor
+        //does it have a valid trigger
+        //iterate through all situations
+        //    if(player.active  &&  (player.location==situation.origin)  &&  ())
+        const triggeredArray = this.returnTriggers(optionString)
+        const triggeredNeighbors = triggeredArray.filter((situation)=>{
+          return situation.neighbors.includes(player.location)
+        })
+
+        console.log(triggeredArray)
+        console.log(triggeredNeighbors)
+
+      }
+
+
+
+      returnTriggers(string){
+        return this.situations.filter((situation)=>{
+          return situation.triggers.includes(string)
+        })
+      }
+
+      injectOptions(){
+        //remove current options
+        while(this.options.firstChild)
+        { this.options.removeChild(this.options.firstChild) }
+
+        //obtain the current options
+        const options = [...this.playerState.options]
+        console.log(options)
+        options.map((option)=>{
+          this.options.appendChild(this.createOptionElement(option))
+        })
+      }
+
+
+      }
+
+
+const adventure = new Choose(situations)
+    </script>
+  </body>
+
+</html>
