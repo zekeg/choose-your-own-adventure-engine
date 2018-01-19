@@ -3,8 +3,8 @@
 
   <head>
   </head>
-<div id="prompt1"className="prompt">
-prompt
+<div id="prompt" class="prompt">
+<p class="promptText">prompt</p>
 </div>
 <div class="options"></div>
   <body>
@@ -17,6 +17,36 @@ prompt
 
 // (arrayOfConditions, userChoice){ sequenceFlow, playerStateUpdates }
 //'clearing stay'
+  const situations2 = [
+    {location: "The Domain",
+    triggers: ["go back to Domain"],
+    neighbors: ["Cheetoh Machine", ],
+    prompt: "You're at the Domain and it suuuucckkss",
+    options: ["Get a cheetoh from the cheetoh machine", "go home"]
+  },
+  {
+    location: "Cheetoh Machine",
+    triggers: ["Get a cheetoh from the cheetoh machine"],
+    prompt: "The Cheetoh Machine asks you if you want a cheetoh and you say yes. You ate the cheetoh",
+    options: ["return"]
+  },
+  {
+    location: "Home",
+    triggers: ["go home"],
+    neighbors: ["The Domain"],
+    prompt: "Driving sucks, but you're home now, Zeke is home",
+    options: ["Walk up to Zeke", "Go back to Domain"]
+  },
+  {
+    location: "Zeke",
+    triggers: ["Walk up to Zeke"],
+    prompt: "I love you! - he says",
+    options: ["return"]
+  }
+  ]
+
+
+
 
 
   const situations = [
@@ -34,16 +64,16 @@ prompt
     {
       location: "path",
       triggers: ["path"],
-      neighbors: ["clearing", "crossroad"],
+      neighbors: ["clearing", "ridge"],
       prompt: "You are walking on the path...",
-      options: ["proceed", "return", "stay"]
+      options: ["proceed", "clearing", "stay"]
     },
     {
       location: "ridge",
-      triggers: ["proceed"],
-      neighbors: ["path"],
+      triggers: ["proceed", "ridge"],
+      neighbors: ["path", "overlook"],
       prompt: "You come to the steepest ridge",
-      options: ["return", "stay", "peek over"]
+      options: ["path", "stay", "peek over"]
     },
     {
       location: "overlook",
@@ -57,19 +87,23 @@ prompt
 //You are at a fork in the road
   //function receives "left"
 
+  //player triggers a location
+
 
   class Choose{
         constructor(situations){
           this.situations = situations
-          this.playerStateUpdates = []
           this.playerState =
           {
             active: true,
             location: "clearing",
             options: ["path", "stay"]
           }
+          this.playerHistory = [this.playerState]
           this.options = document.querySelector(`.options`)
+          this.prompt = document.querySelector(`.prompt`)
           this.injectOptions()
+          this.injectPrompt()
         }
 
       createOptionElement(name){
@@ -82,34 +116,24 @@ prompt
         return option
       }
 
-      handleClick(e){
-        console.log("My data-name is: " + e.target.dataset.name)
-        console.log()
-        this.evaluateOption(e.target.dataset.name)
-      }
-
-      evaluateOption(optionString){
-        const player = this.playerState
-        //does it have a neighbor
-        //does it have a valid trigger
-        //iterate through all situations
-        //    if(player.active  &&  (player.location==situation.origin)  &&  ())
-        const triggeredArray = this.returnTriggers(optionString)
-        const triggeredNeighbors = triggeredArray.filter((situation)=>{
-          return situation.neighbors.includes(player.location)
-        })
-
-        console.log(triggeredArray)
-        console.log(triggeredNeighbors)
-
+      createPromptParagraph(text){
+        const p = document.createElement("p")
+        const textNode = document.createTextNode(text)
+        p.setAttribute("class", "prompt")
+        p.setAttribute("id", "prompt")
+        p.appendChild(textNode)
+        return p
       }
 
 
+      injectPrompt(){
+        while(this.prompt.firstChild){
+          this.prompt.removeChild(this.prompt.firstChild)}
 
-      returnTriggers(string){
-        return this.situations.filter((situation)=>{
-          return situation.triggers.includes(string)
-        })
+        const text = this.situations.find(situation => situation.location == this.playerState.location).prompt
+        const p = this.createPromptParagraph(text)
+
+        this.prompt.appendChild(p)
       }
 
       injectOptions(){
@@ -119,11 +143,85 @@ prompt
 
         //obtain the current options
         const options = [...this.playerState.options]
-        console.log(options)
         options.map((option)=>{
           this.options.appendChild(this.createOptionElement(option))
         })
       }
+
+      returnTriggers(string){
+        return this.situations.filter((situation)=>{
+          return situation.triggers.includes(string)
+        })
+      }
+
+      handleClick(e){
+        this.evaluateOption(e.target.dataset.name)
+      }
+
+
+//EVALUATION OF PLAYER CHOICE
+//so what we want is to establish a "primacy" so:
+  //Is there a status function or a generally accessible function (such as "return" or "stay")?
+          //that should superceed both trigger and neighbor status
+  //Is there only one triggered situation associated with the option?
+          //Then update the player based on that
+  //Are there multiple triggered situations based on option choice? Then see if there is one that is a neighbor and one that isn't
+          //If one is a neighbor and the other isn't, choose that one
+  //Are there multiple neighbors AND multiple triggers? (IE something vague like "climb up" in a cave, wherein there'd be multiple neighbors with the same option trigger)
+          //Here we'd need a player's status to be evaluated; perhaps their past actions or some general status indicator inside their object
+
+      evaluateOption(optionString){
+        //Copy player state before it changes
+        const player = {...this.playerState}
+        console.log(player)
+        //Store as history
+        this.playerHistory.push(player)
+
+
+        const triggeredArray = this.returnTriggers(optionString)
+        const triggeredNeighbors = triggeredArray.filter((situation)=>{
+          return situation.neighbors.includes(player.location)
+        })
+
+        if(optionString == "return"){
+          console.log(this.playerHistory[this.playerHistory.length - 3].location)
+          player.location = this.playerHistory[this.playerHistory.length - 3].location
+        }
+        // IS THE OPTION SELECTED A SOLE TRIGGER?
+        else if(triggeredArray.length==1)
+        {
+          console.log("sole trigger")
+          player.location = triggeredArray[0].location;
+        }
+        //DOES THE OPTION HAVE A SOLE NEIGHBOR AND A TRIGGER
+        else if(triggeredArray.length>1 && triggeredNeighbors.length===1)
+        {
+          console.log("neighbor choice")
+          player.location = triggeredNeighbors[0].location;
+        }
+        //I DONT KNOW!
+        else{
+          console.log("evaluateOption couldn't catch it")
+        }
+
+        //UPDATE
+        this.updatePlayerFromObject(player);
+
+      }
+
+
+
+      updatePlayerFromObject(obj){
+        this.playerState = obj
+        this.playerState.options = this.situations.find(situation => situation.location==obj.location).options
+        this.injectOptions()
+        this.injectPrompt()
+      }
+
+
+
+
+
 
 
       }
