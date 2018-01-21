@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  </head>
+<div id="prompt" class="prompt">
+<p class="promptText"></p>
+</div>
+<div class="options"></div>
+  <body>
+    <script>
+    /*
+      Move to location => evaluate state with choice
+                choice=> is it
+      Return to previous location => evaluate state
+      Perform an action that affects state => evaluate player state and change game state
+
+      evaluate the player's status, choice, etc FIRST, and only then create option buttons
+
+    */
+const world = [{
+      location: "home",
+      prompt: "You are inside your home",
+      actions: [{"take-sandwich": "Grab a sandwich"}, {outside: "Leave home and go outside"}],
+      items: ["sandwich"]
+    },
+    {
+      location: "outside",
+      prompt: "You are outside",
+      actions: [{home: "go back inside your home"}],
+      items: ["dogshit"]
+    }
+  ]
+
+  class World{
+    constructor(world){
+      this.environment = [...world]
+      this.player = {
+        status: "alive",
+        location: "home",
+        items: []
+      }
+
+      this.promptParent = document.querySelector(".prompt")
+      this.optionsParent = document.querySelector(".options")
+      this.update()
+    }
+
+    logWorldStatus(){
+      console.log(this.environment)
+      console.log(this.player)
+      console.log(this.promptParent)
+      console.log(this.optionsParent)
+    }
+
+    createPromptParagraph(text){
+      const p = document.createElement("p")
+      const textNode = document.createTextNode(text)
+      p.setAttribute("class", "prompt")
+      p.setAttribute("id", "prompt")
+      p.appendChild(textNode)
+      return p
+    }
+
+    createOptionButton(text){
+      const div = document.createElement("div")
+      const textNode = document.createTextNode(text)
+      div.appendChild(textNode)
+      div.setAttribute("class", "option")
+      div.addEventListener('click', this.handleClick.bind(this))
+      return div
+    }
+
+
+    evaluateOption(option){
+      //Create copy of player
+      const playerClone = {...this.player}
+      console.log(playerClone)
+
+      //Evaluate Option Type
+        //does it affect player status
+      //Evaulate Player Status
+      //A
+    }
+
+    handleClick(e){
+      this.evaluateOption()
+    }
+
+    clearChildren(parent){
+      while(parent.firstChild){
+        parent.remove(parent.firstChild)
+      }
+    }
+
+    update(){
+      const currentLocation = world.filter(item=>item.location == this.player.location)[0]
+
+      currentLocation.actions.map((action)=>{
+        const optionString = Object.values(action)[0]
+        console.log(optionString)
+        const container = this.createOptionButton(optionString)
+        container.setAttribute("data-option", Object.keys(action)[0])
+        this.optionsParent.appendChild(container)
+      })
+    }
+
+  }
+
+
+const player = new World(world)
+
+    </script>
+  </body>
+
+</html>
