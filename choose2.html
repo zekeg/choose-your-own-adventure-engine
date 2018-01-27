@@ -3,9 +3,7 @@
 
   <head>
   </head>
-<div id="prompt" class="prompt">
-<p class="promptText"></p>
-</div>
+<div id="prompt" class="prompt"></div>
 <div class="options"></div>
   <body>
     <script>
@@ -18,26 +16,73 @@
       evaluate the player's status, choice, etc FIRST, and only then create option buttons
 
     */
+const freeflow = [
+{
+  location: "start",
+  prompt: `A lightly armed traveler.
+
+  You are on the far end of a cave.
+  You went into the cave to get out of the rain.
+  The entrance of the cave collapsed after you went inside to avoid the rain, you were forced to travel in darkness for hours until a change in the air and shaft of light let you know you were not doomed.
+
+  `,
+  actions: [{peek: "Take a peek outside"}, {death: "return into the cave"}],
+  death: "Some awful compulsion urges you back into the mudded cave. You walk in for a short while; the dirt lands in a thick and almost noiseless thud, effortlessly crushing your body and drowning out your breathless wheeze. You will be forgotten."
+},
+{
+  location: "peek",
+  prompt: "you peek outside, you see a large field that stretches out before you. The rain is long gone.",
+  actions: [{cave_entrance: "Leave the cave and look at the entrance"}, {field: "Venture out into the field"}]
+},
+{
+  location: "cave_entrance",
+  prompt: `You walk out to survey the entrance. The cave went underground, you have popped out of the earthy entrance like a varmint. The field goes in all directions; the cave must have led you far from its entrance.`,
+  actions: [{field: "Explore the fields"}]
+},
+{
+  location: "field",
+  prompt: "You walk about the fields, they seem to roll on endlessly with nothing but soft yellowy grass. You try to memorize the geometry of the hills like an erotic memory.",
+  actions: [{cave_entrance: "Retreat to the cave entrance"}, {standard: "Look! There is an upright standard waving on a tall, thick wooden post."}]
+},
+{
+  location: "standard",
+  prompt: "You make your way to the standard. The air feels chilly. The flag waves with the image of a laughing hog with bloody tusks. A barrel rests near the wooden posts, resting upon it is a cask of wine and a cheese wedge wrapped in cloth.",
+  actions: [{cave_entrance: "Retreat back to the cave entrance"}, {death: "You're so hungry...so thirsty. Take the cheese and wine."}],
+  death: "As you take your first sip of wine you hear a distant shriek...You take another sip and hurriedly look around. The shriek lets out again, as the sound rides the wings you cannot place it. The next sound you hear is a rumbling of...hooves...You turn to face the next shriek. The face of the hog is a blur, a memory never recounted."
+}
+
+]
+
+
 const world = [{
-      location: "home",
-      prompt: "You are inside your home",
-      actions: [{"take-sandwich": "Grab a sandwich"}, {outside: "Leave home and go outside"}],
-      items: ["sandwich"]
+      location: "start",
+      prompt: "You are inside your home and there are some sandwiches on the table.",
+      actions: [
+        {shower: "Take a shower"},
+        {outside: "Leave home and go outside"}
+      ],
+      items: ["sandwich", "soap"]
+    },
+    {
+      location: "shower",
+      prompt: "You are taking a luxurious shower, but you're so hungry.",
+      actions: [{home: "Finish showering and leave"}, {shower: "Stay inside the shower"}]
     },
     {
       location: "outside",
-      prompt: "You are outside",
-      actions: [{home: "go back inside your home"}],
-      items: ["dogshit"]
+      prompt: "You are outside, your grave is also out here in the front yard",
+      actions: [{home: "Go back inside your home"}, {death: "jump into your grave and die"}],
+      items: ["dogshit"],
+      death: "You fucking got hit by a car before you could jump and it knocked you over into your grave!! RIP anyway I guess"
     }
   ]
 
-  class World{
+  class Engine{
     constructor(world){
       this.environment = [...world]
       this.player = {
         status: "alive",
-        location: "home",
+        location: "start",
         items: []
       }
 
@@ -46,7 +91,9 @@ const world = [{
       this.update()
     }
 
-    logWorldStatus(){
+
+
+    logEngineStatus(){
       console.log(this.environment)
       console.log(this.player)
       console.log(this.promptParent)
@@ -56,8 +103,8 @@ const world = [{
     createPromptParagraph(text){
       const p = document.createElement("p")
       const textNode = document.createTextNode(text)
-      p.setAttribute("class", "prompt")
-      p.setAttribute("id", "prompt")
+      p.setAttribute("class", "promptText")
+      p.setAttribute("id", "promptText")
       p.appendChild(textNode)
       return p
     }
@@ -74,41 +121,71 @@ const world = [{
 
     evaluateOption(option){
       //Create copy of player
+      const currentLocationObj = this.environment.filter(item=>item.location == this.player.location)[0]
       const playerClone = {...this.player}
-      console.log(playerClone)
+      const locations = this.environment.map(item=>item.location)
 
+
+      console.log(currentLocationObj)
+
+      if(locations.includes(option)){playerClone.location = option}
+      //ELSE IF THE CHOICE WAS ALREADY A KEY INSIDE THE LOCATION OBJECT THENNNN....
+      else if(Object.keys(currentLocationObj).includes(option)){
+        option === "death"? playerClone.status = "dead" : this.promptParent.appendChild( this.createPromptParagraph(currentLocationObj[option]) )
+      }
+
+      console.log(playerClone)
       //Evaluate Option Type
         //does it affect player status
       //Evaulate Player Status
-      //A
+
+      this.player = {...playerClone}
+      this.update()
     }
 
     handleClick(e){
-      this.evaluateOption()
+      this.evaluateOption(e.target.dataset.option)
     }
 
     clearChildren(parent){
-      while(parent.firstChild){
-        parent.remove(parent.firstChild)
+      while(parent.hasChildNodes()){
+        parent.firstChild.remove()
       }
     }
 
     update(){
-      const currentLocation = world.filter(item=>item.location == this.player.location)[0]
+      const currentLocation = this.environment.filter(item=>item.location == this.player.location)[0]
+      const playerStatus = this.player.status
 
+      console.log(playerStatus)
+
+      if (playerStatus === "dead"){
+        this.clearChildren(this.promptParent)
+        this.clearChildren(this.optionsParent)
+        console.log(currentLocation)
+        this.promptParent.appendChild(this.createPromptParagraph(currentLocation.death))
+      }
+      else
+      { //update paragraph
+      this.clearChildren(this.promptParent)
+      this.promptParent.appendChild(this.createPromptParagraph(currentLocation.prompt))
+
+      //update options
+      this.clearChildren(this.optionsParent)
       currentLocation.actions.map((action)=>{
         const optionString = Object.values(action)[0]
         console.log(optionString)
         const container = this.createOptionButton(optionString)
         container.setAttribute("data-option", Object.keys(action)[0])
         this.optionsParent.appendChild(container)
-      })
+      })}
+
     }
 
   }
 
 
-const player = new World(world)
+const player = new Engine(freeflow)
 
     </script>
   </body>
