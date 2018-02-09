@@ -15,6 +15,13 @@
 
       evaluate the player's status, choice, etc FIRST, and only then create option buttons
 
+
+
+
+
+
+
+
     */
 const freeflow = [
 {
@@ -23,11 +30,10 @@ const freeflow = [
 
   You are on the far end of a cave.
   You went into the cave to get out of the rain.
-  The entrance of the cave collapsed after you went inside to avoid the rain, you were forced to travel in darkness for hours until a change in the air and shaft of light let you know you were not doomed.
-
-  `,
+  The entrance of the cave collapsed after you went inside to avoid the rain, you were forced to travel in darkness for hours until a change in the air and shaft of light let you know you were not doomed.`,
   actions: [{peek: "Take a peek outside"}, {death: "return into the cave"}],
-  death: "Some awful compulsion urges you back into the mudded cave. You walk in for a short while; the dirt lands in a thick and almost noiseless thud, effortlessly crushing your body and drowning out your breathless wheeze. You will be forgotten."
+  death: "Some awful compulsion urges you back into the mudded cave. You walk in for a short while; the dirt lands in a thick and almost noiseless thud, effortlessly crushing your body and drowning out your breathless wheeze. You will be forgotten.",
+  items: [{potion: ()=>{console.log(player)}}]
 },
 {
   location: "peek",
